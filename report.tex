@@ -1,0 +1,988 @@
+% Setup
+\documentclass[12pt]{article}
+\title{MATH38141 Regression Analysis Coursework}
+\author{Name: Josh Mottley
+\and Student ID: 10136392}
+\date{\today}
+
+% Packages
+\usepackage{geometry}
+\usepackage{lingmacros}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage[svgnames]{xcolor}
+\usepackage{listings}
+\usepackage{csquotes}
+
+%Slightly bigger size: \scriptsize
+\lstset{
+  language=R,                     % the language of the code
+  basicstyle=\scriptsize\ttfamily, % the size of the fonts that are used for the code
+  numbers=left,                   % where to put the line-numbers
+  numberstyle=\scriptsize\color{Blue},  % the style that is used for the line-numbers
+  stepnumber=1,                   % the step between two line-numbers. If it is 1, each line
+                                  % will be numbered
+  numbersep=5pt,                  % how far the line-numbers are from the code
+  backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  frame=single,                   % adds a frame around the code
+  rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=t,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  deletekeywords={data,frame,length,as,character},
+  keywordstyle=\color{RoyalBlue},      % keyword style
+  otherkeywords={},
+  commentstyle=\color{DarkGreen},   % comment style
+  stringstyle=\color{ForestGreen}      % string literal style
+}
+
+\lstset{literate=%
+   *{0}{{{\color{RoyalBlue}0}}}1
+    {1}{{{\color{RoyalBlue}1}}}1
+    {2}{{{\color{RoyalBlue}2}}}1
+    {3}{{{\color{RoyalBlue}3}}}1
+    {4}{{{\color{RoyalBlue}4}}}1
+    {5}{{{\color{RoyalBlue}5}}}1
+    {6}{{{\color{RoyalBlue}6}}}1
+    {7}{{{\color{RoyalBlue}7}}}1
+    {8}{{{\color{RoyalBlue}8}}}1
+    {9}{{{\color{RoyalBlue}9}}}1
+    {TRUE}{{{\color{RoyalBlue}TRUE}}}4
+    {FALSE}{{{\color{RoyalBlue}FALSE}}}5
+    {<-}{{{\color{Gray}<-}}}2
+}
+
+% Commands/Setup
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\mat}[1]{\underline{\boldsymbol{#1}}}
+\newcommand{\mean}[1]{\bar{#1}}
+\newcommand{\trans}[1]{#1^T}
+\newcommand{\est}[1]{\hat{#1}}
+
+\geometry{
+a4paper,
+left=15mm,
+top=20mm,
+bottom=20mm,
+right=15mm,
+heightrounded
+}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+
+% Document
+\begin{document}
+
+% Title page
+\begin{titlepage}
+\maketitle
+
+\section*{Introduction}
+A chemist has reported that adding naphthenic oil and filler can be used to control the viscosity of elastomer blends. I have been given data of various viscosities with the amount of oil and filler added in. It is believed that the viscosity follows a normal distribution with homogenous variance for any oil and filler level within the design region. I will be analysing the data given and creating 2 regression models that fits the data given. After this I will try to make a statistical guess on whether the a new idea by a chemist of a viscosity with a given oil/filler is correct.
+I will then reanalyse my 2 models, with there associated results with the statistical programming language R, and then compare the results between manual vs programming. Finally I will draw a conclusion from the original statement of the chemist. \par
+
+For this report I will be using bold letters to represents vectors (e.g: $\vect{A}$), bold and underlined letters to show matrices (e.g: $\mat{B}$), and a hat to show estimates (e.g: $\est{\vect{\beta}}$). A full example may look like:
+\begin{equation*}
+\est{\vect{y}}=\est{\vect{\beta}}\mat{X}
+\end{equation*} \par
+I will also be using R for the matrix calculations.
+
+Futhermore when using reference, if the reference has the layout Listing-(\#) where \# is a number, then the reference is refering to the appendix section of the report. Otherwise it has been stated previously.
+\vfill
+\end{titlepage}
+
+\section{Analyse of data without R}
+Please note that the matrix calculation are done in R. If you wish to see the programming please refer to Listing-(\ref{lin_code}).
+\subsection{Creating a regression model}
+\subsubsection{Linear regression}
+When creating the model, I choose the viscosity to be the response variable, and the naphthenic oil and filler as the input variables. I will take into account a constant term, main eﬀects for naphthenic oil and for ﬁller, and an interaction term. This gives our model as:
+\begin{equation} \label{lin_model}
+\vect{y} = \beta_0 + \beta_1\vect{X_1} + \beta_2\vect{X_2} + \beta_3\vect{X_1}\vect{X_2} + \vect{\varepsilon}
+\end{equation}
+where $\vect{X_1}$ is the vector of samples for the naphthenic oil, $\vect{X_2}$ is the vector of samples for the filler, $\vect{\varepsilon}$ is the error vector, $\vect{y}$ is the vector of samples for the corresponding viscosity, and lastly $\beta_i$ are our model parameters. Note that the errors $\varepsilon_i$ are assumed to be independently distributed, with 0 mean $\mu$ and homogeneous variance $\sigma^2$.
+We can also write this in its matrix form:
+\begin{equation*}
+\vect{y} = \mat{X}\vect{\beta} + \vect{\varepsilon}
+\end{equation*}
+where:
+$\mat{X} = \begin{pmatrix}
+              \vect{1} & \vect{X_1} & \vect{X_2} & \vect{X_1}\vect{X_2}
+           \end{pmatrix}$,
+$\vect{\beta} = \begin{pmatrix}
+                  \beta_0 \\ \beta_1 \\ \beta_2 \\ \beta_3
+                \end{pmatrix}$.\par
+So now using the data given in the Viscos.txt the first 3 rows of the matrix $\mat{X}$, with its correspond response variable $\vect{y}$ would be:
+\begin{equation*}
+\mat{X} =
+\begin{pmatrix}
+  1   &   0   &   0   &   0   \\
+  1   &   0   &   12  &   0   \\
+  1   &   0   &   24  &   0   \\
+\end{pmatrix},
+\vect{y} =
+\begin{pmatrix}
+  6.5   \\
+  9.5   \\
+  12.50 \\
+\end{pmatrix}
+\end{equation*}
+Now we want to estimate the values of $\vect{\beta}$ which we will call $\est{\vect{\beta}}$, so we will use the formula:
+\begin{equation*}
+\est{\vect{\beta}} = (\trans{\mat{X}}\mat{X})^{-1}\trans{\mat{X}}\vect{y}
+\end{equation*}
+First we will work out $(\trans{\mat{X}}\mat{X})^{-1}$:
+\begin{gather}
+  \trans{\mat{X}}\mat{X} =
+  \begin{pmatrix}
+    23    &   330     &   720      &   10800      \\
+   330    &   7500    &   10800    &   252000     \\
+   720    &   10800   &   31680    &   475200     \\
+   10800  &   252000  &   475200   &   11088000   \\
+ \end{pmatrix} \\
+ \implies (\trans{\mat{X}}\mat{X})^{-1} =
+ \begin{pmatrix} \label{lin_(X^TX)^-1}
+    0.3839957035    &   \num{-1.831364e-02}   &   -0.0087271751    &   \num{4.162191e-04 } \\
+   -0.0183136412    &   \num{1.437522e-03 }   &    0.0004162191    &   \num{-3.267096e-05} \\
+   -0.0087271751    &   \num{4.162191e-04 }   &    0.0002867287    &   \num{-1.324740e-05} \\
+    0.0004162191    &   \num{-3.267096e-05}   &   -0.0000132474    &   \num{ 9.950471e-07}
+ \end{pmatrix}
+\end{gather}
+Next we will find the value of $\trans{\mat{X}}\vect{y}$:
+\begin{equation*}
+  \trans{\mat{X}}\vect{y} =
+  \begin{pmatrix}
+    301     \\
+    3315    \\
+    12783   \\
+    142920  \\
+  \end{pmatrix}
+\end{equation*}
+Which means our final solution to our estimate of the coeffecient vector $\est{\vect{\beta}}$ is:
+\begin{equation*}
+  \setlength{\jot}{10pt}
+  \begin{split}
+    \est{\vect{\beta}} & = (\trans{\mat{X}}\mat{X})^{-1}\trans{\mat{X}}\vect{y} \\
+                      & =
+                         \begin{pmatrix}
+                            0.3839957035    &   \num{-1.831364e-02}    &   -0.0087271751    &    \num{4.162191e-04 } \\
+                           -0.0183136412    &   \num{1.437522e-03 }    &    0.0004162191    &    \num{-3.267096e-05} \\
+                           -0.0087271751    &   \num{4.162191e-04 }    &    0.0002867287    &    \num{-1.324740e-05} \\
+                            0.0004162191    &   \num{-3.267096e-05}    &   -0.0000132474    &    \num{9.950471e-07 }
+                         \end{pmatrix}
+                         \begin{pmatrix}
+                           301     \\
+                           3315    \\
+                           12783   \\
+                           142920  \\
+                         \end{pmatrix} \\
+    \est{\vect{\beta}} & =
+                        \begin{pmatrix}
+                           2.79954350 \\
+                          -0.09582438 \\
+                           0.52482098 \\
+                          -0.01015172 \\
+                        \end{pmatrix}
+  \end{split}
+\end{equation*}
+Which will result in our estimated fitted model (when provided with the given data) now looking like:
+\begin{equation*}
+\est{\vect{y}} = \begin{pmatrix}
+                    \vect{1} & \vect{X_1} & \vect{X_2} & \vect{X_1}\vect{X_2}
+                 \end{pmatrix}
+                 \begin{pmatrix}
+                    2.79954350 \\
+                   -0.09582438 \\
+                    0.52482098 \\
+                   -0.01015172 \\
+                 \end{pmatrix}
+\end{equation*}
+
+
+\subsubsection{Estimating the variance of the response}
+To find an estimate of the variance of the response of my model, I will find the LS estimate for $\sigma^2$. To do this, we must first calculate the SSE of my model, given by:
+\begin{align}
+  \text{SSE} & = \trans{\vect{y}}\vect{y} - \trans{\est{\vect{\beta}}}\trans{\vect{X}}\vect{y} \nonumber \\
+             & = 5918.125 - 5782.908 \nonumber \\
+             & = 135.2173 \label{lin_SSE}
+\end{align}
+Hence my estimate our $\sigma^2$ is:
+\begin{align}
+  \sigma^2 & = \frac{\text{SSE}}{n-p} \nonumber \\
+           & = \frac{\text{SSE}}{23-4} = \frac{135.2173}{19} \nonumber \\
+           & = 7.116698 \label{lin_var}
+\end{align}
+
+
+\subsubsection{Finding the coefficient  of determination $R^2$}
+To find the coefficient of determination I first need to find the value of $\text{SST}_C$. This can be given by the equation: $\text{SST}_C=\text{SST}-n\text{y}^2$. To value of the SST is given by:
+\begin{align}
+  \text{SST} & = \sum_{i=1}^{n} y_i^2 \nonumber \\
+             & = \trans{\vect{y}}\vect{y} \nonumber \\
+             & = 5918.125 \label{SST}
+\end{align}
+Next we need to work out the mean $\mean{y}$ with the following:
+\begin{align}
+  \mean{y} & = \frac{\sum_{i=1}^{n}y_i}{n} \nonumber \\
+           & = \frac{\sum_{i=1}^{23}y_i}{23} \nonumber \\
+           & = \frac{301}{23} \nonumber \\
+           & = 13.08696 \label{lin_ymean}
+\end{align}
+So finally the value of $\text{SST}_C$ with (\ref{SST}) and (\ref{lin_ymean}) subbed in is:
+\begin{align}
+  \text{SST}_C & = \text{SST} - n\mean{y}^2 \nonumber \\
+               & = 5918.125 - 23(13.08696)^2 \nonumber \\
+               & = 1978.951 \label{SST_C}
+\end{align}
+Now to find the value of the coefficient of determination, sub (\ref{SST_C}) and (\ref{lin_SSE}) into the following:
+\begin{align}
+    R^2 & = \frac{\text{SST}_C - SSE}{\text{SST}_C} \nonumber \\
+        & = \frac{1978.951 - 135.2173}{1978.951} \nonumber \\
+        & = 0.9316723 \label{lin_R}
+\end{align}
+The value of $R^2$ is very close to 1, which suggests that that the model is very successful in predicting the observed values of $Y$.
+
+
+\subsubsection{Testing for if the true values of the model parameters equal to zero}
+Test for significance for each model parameters, i.e: $H_0: \beta_i = \vect{0}, H_1: \beta_i \neq \vect{0}$. I choose $\alpha = 1-\gamma = 2.5\%$ significance test. The critical value $t_{n-p, \gamma}=t_{19, 0.975} = 2.093$. Use the test statistic equation to find the t-value for each parameter:
+\begin{equation*}
+    \frac{\est{\beta}_i - c_i} {\est{\sigma}\sqrt{g^{ii}}}
+  = \frac{\est{\beta}_i - 0} {\sqrt{7.116698}\sqrt{g^{ii}}}
+  = \frac{\est{\beta}_i} {\sqrt{7.116698}\sqrt{g^{ii}}}
+  \sim t_{19}
+\end{equation*}
+Note that $g^{ii}$ is the ith diagonal element of the matrix $\vect{G}^{-1} = (\trans{\vect{X}}\vect{X})^{-1}$ which was figured out in (\ref{lin_(X^TX)^-1}). Next find the test statistic of each parameter and compare against the critical value:
+\begin{equation} \label{ts0}
+    \frac{\est{\beta}_0} {\sqrt{7.116698}\sqrt{g^{11}}}
+  = \frac{2.79954350} {\sqrt{7.116698}\sqrt{0.3839957035}}
+  = 1.6934984
+\end{equation}
+\begin{equation} \label{ts1}
+    \frac{\est{\beta}_1} {\sqrt{7.116698}\sqrt{g^{22}}}
+  = \frac{-0.09582438} {\sqrt{7.116698}\sqrt{\num{1.437522e-03 }}}
+  = -0.9473915
+\end{equation}
+\begin{equation} \label{ts2}
+    \frac{\est{\beta}_2} {\sqrt{7.116698}\sqrt{g^{33}}}
+  = \frac{0.52482098} {\sqrt{7.116698}\sqrt{0.0002867287}}
+  = 11.6181327
+\end{equation}
+\begin{equation} \label{ts3}
+    \frac{\est{\beta}_3} {\sqrt{7.116698}\sqrt{g^{44}}}
+  = \frac{-0.01015172} {\sqrt{7.116698}\sqrt{\num{ 9.950471e-07}}}
+  = -3.8148590
+\end{equation}
+While the critical value $t_{19, 0.975} = 2.093 > |1.6934984|, |-0.9473915|$ which mean that (\ref{ts0}) and (\ref{ts1}) pass, (\ref{ts2}) and (\ref{ts3}) do not pass as $t_{19, 0.975} = 2.093 < |11.6181327|, |-3.8148590|$. Therefore we reject $H_0$ and conclude that the model parameters are significant/non-zero.
+
+
+\subsection{Creating a quadratic model}
+Please note that the matrix calculation are done in R. If you wish to see the programming please refer to Listing-(\ref{quad_code}).
+\subsubsection{Quadratic regression}
+When creating a quadratic regression model, I will use the same random input variables as when creating the linear regression in (\ref{lin_model}). Instead I will use the following model for my regression:
+\begin{equation} \label{quad_model}
+  \vect{y} = \beta_0 + \beta_1\vect{X_1} + \beta_2\vect{X_2} + \beta_3\vect{X_1}\vect{X_2} + \beta_4\vect{X_1}^2 + \beta_5\vect{X_2}^2 + \vect{\varepsilon}
+\end{equation}
+In matrix form this would look like the following:
+\begin{equation*}
+  \vect{y} = \mat{X}\vect{\beta} + \vect{\varepsilon}
+\end{equation*}
+where:
+$\mat{X} = \begin{pmatrix}
+              \vect{1} & \vect{X_1} & \vect{X_2} & \vect{X_1}\vect{X_2} & \vect{X_1}^2 & \vect{X_2}^2
+           \end{pmatrix}$,
+$\vect{\beta} = \begin{pmatrix}
+                  \beta_0 \\ \beta_1 \\ \beta_2 \\ \beta_3 \\ \beta_4 \\ \beta_5
+                \end{pmatrix}$. \par
+Now to find estimates of $\est{\vect{\beta}}$ we will use the same method as with the linear model. So we want to first work out the value of $(\trans{\mat{X}}\mat{X})^{-1}$:
+\begin{equation*}
+  \trans{\mat{X}}\mat{X} =
+  \begin{pmatrix}
+    23       &   330        &   720       &     10800      &   7500      &   31680    \\
+    330      &   7500       &   10800     &     252000     &   189000    &   475200   \\
+    720      &   10800      &   31680     &     475200     &   252000    &   1555200  \\
+    10800    &   252000     &   475200    &   11088000     &   6480000   &   23328000 \\
+    7500     &   189000     &   252000    &     6480000    &   5070000   &   11088000 \\
+    31680    &   475200     &   1555200   &     23328000   &   11088000  &   81202176
+  \end{pmatrix}
+\end{equation*}
+\begin{equation} \label{quad_(X^TX)^-1}
+  \resizebox{0.93\linewidth}{!}{ $
+   \implies (\trans{\mat{X}}\mat{X})^{-1} =
+   \begin{pmatrix}
+ 0.4829853691 & \num{-2.814401e-02} & \num{-1.778522e-02} & \num{ 3.493342e-04} & \num{ 4.257768e-04} & \num{ 1.583991e-04} \\
+-0.0281440079 & \num{ 4.817593e-03} & \num{ 3.141439e-04} & \num{-2.602882e-05} & \num{-1.224108e-04} & \num{ 9.632377e-07} \\
+-0.0177852211 & \num{ 3.141439e-04} & \num{ 1.532919e-03} & \num{-7.127103e-06} & \num{-5.573936e-06} & \num{-2.144988e-05} \\
+ 0.0003493342 & \num{-2.602882e-05} & \num{-7.127103e-06} & \num{ 1.040240e-06} & \num{-2.876870e-07} & \num{-1.070264e-07} \\
+ 0.0004257768 & \num{-1.224108e-04} & \num{-5.573936e-06} & \num{-2.876870e-07} & \num{ 4.502301e-06} & \num{ 1.248641e-07} \\
+ 0.0001583991 & \num{ 9.632377e-07} & \num{-2.144988e-05} & \num{-1.070264e-07} & \num{ 1.248641e-07} & \num{ 3.693898e-07} \\
+   \end{pmatrix}
+  $}
+\end{equation}
+Now find the vector $\trans{\mat{X}}\vect{y}$:
+\begin{equation} \label{quad_X^Ty}
+  \trans{\mat{X}}\vect{y} =
+  \begin{pmatrix}
+    301     \\
+    3315    \\
+    12783   \\
+    142920  \\
+    70400   \\
+    640044  \\
+  \end{pmatrix}
+\end{equation}
+Now we can find the estimates of $\est{\vect{\beta}}$, sub (\ref{quad_(X^TX)^-1}) and (\ref{quad_X^Ty}) into the following:
+\begin{align}
+  \est{\vect{\beta}} & = (\trans{\mat{X}}\mat{X})^{-1}\trans{\mat{X}}\vect{y} \nonumber \\
+                     & =
+                    \resizebox{0.85\linewidth}{!}{ $
+                    \begin{pmatrix}
+ 0.4829853691 & \num{-2.814401e-02} & \num{-1.778522e-02} & \num{ 3.493342e-04} & \num{ 4.257768e-04} & \num{ 1.583991e-04} \\
+-0.0281440079 & \num{ 4.817593e-03} & \num{ 3.141439e-04} & \num{-2.602882e-05} & \num{-1.224108e-04} & \num{ 9.632377e-07} \\
+-0.0177852211 & \num{ 3.141439e-04} & \num{ 1.532919e-03} & \num{-7.127103e-06} & \num{-5.573936e-06} & \num{-2.144988e-05} \\
+ 0.0003493342 & \num{-2.602882e-05} & \num{-7.127103e-06} & \num{ 1.040240e-06} & \num{-2.876870e-07} & \num{-1.070264e-07} \\
+ 0.0004257768 & \num{-1.224108e-04} & \num{-5.573936e-06} & \num{-2.876870e-07} & \num{ 4.502301e-06} & \num{ 1.248641e-07} \\
+ 0.0001583991 & \num{ 9.632377e-07} & \num{-2.144988e-05} & \num{-1.070264e-07} & \num{ 1.248641e-07} & \num{ 3.693898e-07}
+                  \end{pmatrix}
+                    $}
+                    \begin{pmatrix}
+                      301     \\
+                      3315    \\
+                      12783   \\
+                      142920  \\
+                      70400   \\
+                      640044  \\
+                    \end{pmatrix} \nonumber \\
+  \est{\vect{\beta}} & =
+                    \begin{pmatrix}
+                      6.016644748 \\
+                     -0.206571079 \\
+                      0.143467750 \\
+                     -0.012325436 \\
+                      0.006879675 \\
+                      0.006597411
+                    \end{pmatrix} \label{quad_beta}
+\end{align}
+Which will result in our fitted quadratic model (with provided data) now looking like:
+\begin{equation*}
+  \est{\vect{y}} = \begin{pmatrix}
+                      \vect{1} & \vect{X_1} & \vect{X_2} & \vect{X_1}\vect{X_2} & \vect{X_1}^2 & \vect{X_2}^2
+                   \end{pmatrix}
+                   \begin{pmatrix}
+                     6.016644748 \\
+                    -0.206571079 \\
+                     0.143467750 \\
+                    -0.012325436 \\
+                     0.006879675 \\
+                     0.006597411
+                   \end{pmatrix}
+\end{equation*}
+
+
+\subsubsection{Estimating the variance of the response}
+Similary to the linear model, I will use a similar method to find the estimate of the variance of the response. So first we need to calculate the SSE of the model:
+\begin{align} \label{quad_SSE}
+  \text{SSE} & = \trans{\vect{y}}\vect{y} - \trans{\est{\vect{\beta}}}\trans{\vect{X}}\vect{y} \nonumber \\
+             & = 5918.125 - 5905.587\nonumber \\
+             & = 12.53844
+\end{align}
+Hence, substiture (\ref{quad_SSE}) into the equation for $\sigma^2$ to find our LS estimate:
+\begin{align}
+  \sigma^2 & = \frac{\text{SSE}} {n-p} \nonumber \\
+           & = \frac{12.53844} {23-5}  \nonumber \\
+           & = 0.7375553 \label{quad_var}
+\end{align}
+The estimate for $\sigma^2$ for our quadratic model (\ref{quad_var}) is much smaller than the estimate from our linear model (\ref{lin_var}). The reason for this is that the fit of the quadratic model is much closer to the data points given in the sample than for the linear model, resulting in a much smaller SSE, leading to a much smaller estimate of $\sigma^2$.
+
+
+\subsubsection{Finding the coefficient of determination $R^2$}
+To find the coefficient of determination, we can use the value of the $\text{SST}_C$ that we worked out in (\ref{SST_C}) previously. Therefore the coefficient of determination is now:
+\begin{align}
+      R^2 & = \frac{\text{SST}_C - SSE}{\text{SST}_C} \nonumber \\
+          & = \frac{1978.951 - 12.53844}{1978.951} \nonumber \\
+          & = 0.9936641 \label{quad_R}
+\end{align}
+The coeffecient of determination $R^2$ is very close to 1, which suggests that the model is very successful in predicting the observed values of $y$. The coeffecient of determination for the quadratic model (\ref{quad_R}) is greater than the linear model (\ref{lin_R}), which suggests that the quadratic model is more successful in predicting the observed values of $y$. We can say that there is a $\frac{(\ref{quad_R})-(\ref{lin_R})}{1}*100=\frac{0.9936641-0.9316723}{1}*100=6.19918\%$ increase in prediction of the observed values for the coeffecient of determination of the quadratic model.
+
+
+\subsubsection{Testing for if the true values of the model parameters equal to zero}
+Test for significance for each model parameters, i.e: $H_0: \beta_i = \vect{0}, H_1: \beta_i \neq \vect{0}$. I choose $\alpha = 1-\gamma = 2.5\%$ significance test. The critical value $t_{n-p, \gamma}=t_{17, 0.975} = 2.110$. Use the test statistic equation to find the t-value for each parameter:
+\begin{equation*}
+    \frac{\est{\beta}_i - c_i} {\est{\sigma}\sqrt{g^{ii}}}
+  = \frac{\est{\beta}_i - 0} {\sqrt{0.7375553}\sqrt{g^{ii}}}
+  = \frac{\est{\beta}_i} {\sqrt{0.7375553}\sqrt{g^{ii}}}
+  \sim t_{19}
+\end{equation*}
+Note that $g^{ii}$ is the ith diagonal element of the matrix $\vect{G}^{-1} = (\trans{\vect{X}}\vect{X})^{-1}$ which was figured out in (\ref{quad_(X^TX)^-1}). Next find the test statistic of each parameter and compare against the critical value:
+\begin{equation} \label{quad_ts0}
+    \frac{\est{\beta}_0} {\sqrt{0.7375553}\sqrt{g^{11}}}
+  = \frac{6.016644748} {\sqrt{0.7375553}\sqrt{0.4829853691}}
+  = 10.080686
+\end{equation}
+\begin{equation} \label{quad_ts1}
+    \frac{\est{\beta}_1} {\sqrt{0.7375553}\sqrt{g^{22}}}
+  = \frac{-0.206571079} {\sqrt{0.7375553}\sqrt{\num{4.817593e-03}}}
+  = -3.465431
+\end{equation}
+\begin{equation} \label{quad_ts2}
+    \frac{\est{\beta}_2} {\sqrt{0.7375553}\sqrt{g^{33}}}
+  = \frac{0.143467750} {\sqrt{0.7375553}\sqrt{\num{1.532919e-03}}}
+  = 4.266752
+\end{equation}
+\begin{equation} \label{quad_ts3}
+    \frac{\est{\beta}_3} {\sqrt{0.7375553}\sqrt{g^{44}}}
+  = \frac{-0.012325436} {\sqrt{0.7375553}\sqrt{\num{1.040240e-06}}}
+  = -14.071432
+\end{equation}
+\begin{equation} \label{quad_ts4}
+    \frac{\est{\beta}_4} {\sqrt{0.7375553}\sqrt{g^{55}}}
+  = \frac{0.006879675} {\sqrt{0.7375553}\sqrt{\num{4.502301e-06}}}
+  = 3.775316
+\end{equation}
+\begin{equation} \label{quad_ts5}
+    \frac{\est{\beta}_5} {\sqrt{0.7375553}\sqrt{g^{66}}}
+  = \frac{0.006597411} {\sqrt{0.7375553}\sqrt{0.006597411}}
+  = 12.639615
+\end{equation}
+(\ref{quad_ts0}), (\ref{quad_ts1}), (\ref{quad_ts2}), (\ref{quad_ts3}), (\ref{quad_ts4}), (\ref{quad_ts5}) do not pass as: \par
+$t_{19, 0.975} = 2.093 < |10.080686|, |-3.465431|, |4.266752|, |-14.071432|, |3.775316|, |12.639615|$.\par
+Therefore we reject $H_0$ and conclude that the model parameters are significant/non-zero.
+
+
+\subsubsection{Comparison between the 2 models}
+When comparing between the linear model and the quadratic model, we have found that the quadratic model has a much smaller estimated L.S variance $\sigma^2$ than the linear models estimate, which means that the data points are much closer to the quadratic regression model on average than the linear model. Futhermore, the quadratic model coefficient of determination $R^2$ is closer to 1 than the linear models, suggesting that the model is more successful at prediciting the observed values. Therefore it appears that the quadratic model is a superior fit for the given data than the linear model, and hence is more likely to have a higher accuracy when predicting future unknown values of viscosity for Oil/Filler input.
+
+
+\subsection{Prediction using confidence intervals}
+I will choose to use the quadratic regression model (\ref{quad_model}) when working out the confidence intervals. \enquote{An elastomer blend with viscosity equal to 21 M is required. A chemist believes that this can be achieved by using 10 phr oil and 50 phr filler.}
+
+\subsubsection{95\% confidence interval for the mean viscosity of elastomer blends manufactured as suggested by the chemist}
+To create this confidence interval, I will use a $(1-\alpha)$100\% confidence interval for mean $y_0$, i.e:
+\begin{equation} \label{confidence_interval}
+  \trans{\vect{f}_0}\est{\vect{\beta}} \pm
+  t_{n-p,1-\frac{\alpha}{2}}\est{\sigma}\sqrt{\trans{\vect{f}_0}(\trans{\mat{X}}\mat{X})^{-1}\vect{f}_0}
+\end{equation}
+The value of
+$\vect{f}_0 =
+\begin{pmatrix}
+  1     \\
+  10    \\
+  50    \\
+  500   \\
+  100   \\
+  2500  \\
+\end{pmatrix}$, which uses the input data given by the chemist, that is believed to be true. \par
+We already know the values for the quadratic regression model of $\est{\vect{\beta}}$ (\ref{quad_beta}), $\est{\sigma}$ (\ref{quad_var}) and $(\trans{\mat{X}}\mat{X})^{-1}$ (\ref{quad_(X^TX)^-1}). So that gives us the confidence interval as:
+\begin{align}
+  &\trans{\vect{f}_0}\est{\vect{\beta}} \pm
+  t_{n-p,1-\frac{\alpha}{2}}\est{\sigma}\sqrt{\trans{\vect{f}_0}(\trans{\mat{X}}\mat{X})^{-1}\vect{f}_0} \nonumber \\
+  &\implies \trans{\begin{pmatrix}
+    1     \\
+    10    \\
+    50    \\
+    500   \\
+    100   \\
+    2500  \\
+  \end{pmatrix}}
+  \begin{pmatrix}
+    6.016644748 \\
+   -0.206571079 \\
+    0.143467750 \\
+   -0.012325436 \\
+    0.006879675 \\
+    0.006597411
+  \end{pmatrix} \pm
+  t_{23-6,1-\frac{0.05}{2}} \nonumber \\
+  &\resizebox{0.93\linewidth}{!}{ $
+  \cdot 0.7375553
+  \sqrt{
+  \trans{\begin{pmatrix}
+    1     \\
+    10    \\
+    50    \\
+    500   \\
+    100   \\
+    2500  \\
+  \end{pmatrix}}
+  \begin{pmatrix}
+0.4829853691 & \num{-2.814401e-02} & \num{-1.778522e-02} & \num{ 3.493342e-04} & \num{ 4.257768e-04} & \num{ 1.583991e-04} \\
+-0.0281440079 & \num{ 4.817593e-03} & \num{ 3.141439e-04} & \num{-2.602882e-05} & \num{-1.224108e-04} & \num{ 9.632377e-07} \\
+-0.0177852211 & \num{ 3.141439e-04} & \num{ 1.532919e-03} & \num{-7.127103e-06} & \num{-5.573936e-06} & \num{-2.144988e-05} \\
+0.0003493342 & \num{-2.602882e-05} & \num{-7.127103e-06} & \num{ 1.040240e-06} & \num{-2.876870e-07} & \num{-1.070264e-07} \\
+0.0004257768 & \num{-1.224108e-04} & \num{-5.573936e-06} & \num{-2.876870e-07} & \num{ 4.502301e-06} & \num{ 1.248641e-07} \\
+0.0001583991 & \num{ 9.632377e-07} & \num{-2.144988e-05} & \num{-1.070264e-07} & \num{ 1.248641e-07} & \num{ 3.693898e-07} \\
+  \end{pmatrix}
+  \begin{pmatrix}
+    1     \\
+    10    \\
+    50    \\
+    500   \\
+    100   \\
+    2500  \\
+  \end{pmatrix}
+  }
+  $} \nonumber \\
+  &\implies 22.1431 \pm 2.110 \cdot 0.7375553 \sqrt{0.1446243} \nonumber \\
+  &\implies 22.1431 \pm 0.5918309 \nonumber \\
+  &\implies (21.55127, 22.73493) \label{quad_ci}
+\end{align}
+As the required value of viscosity is 21M, which exists outside of the 95\% confidence interval (\ref{quad_ci}), then we reject the chemist guess that this can be achieved by using 10 phr oil and 50 phr filler.
+
+
+\subsubsection{Calculating an interval that will contain the measured value 95\% of the time}
+To create an interval that will contain the measured value 95\% of the time, I will use a $(1-\alpha)$100\% prediction interval given by the following:
+\begin{equation} \label{prediction_interval}
+  \trans{\vect{f}_0}\est{\vect{\beta}} \pm
+  t_{n-p,1-\frac{\alpha}{2}}\est{\sigma}\sqrt{1+\trans{\vect{f}_0}(\trans{\mat{X}}\mat{X})^{-1}\vect{f}_0}
+\end{equation}
+As we have used most of the values when working out the confidence interval, then our predicition interval is:
+\begin{align}
+  &\trans{\vect{f}_0}\est{\vect{\beta}} \pm
+  t_{n-p,1-\frac{\alpha}{2}}\est{\sigma}\sqrt{1+\trans{\vect{f}_0}(\trans{\mat{X}}\mat{X})^{-1}\vect{f}_0} \nonumber \\
+  \implies &\trans{\vect{f}_0}\est{\vect{\beta}} \pm
+  t_{23-6,1-\frac{0.05}{2}}\est{\sigma}\sqrt{1+\trans{\vect{f}_0}(\trans{\mat{X}}\mat{X})^{-1}\vect{f}_0} \nonumber \\
+  \implies &22.1431 \pm 2.110 \cdot 0.7375553 \sqrt{1+0.1446243} \nonumber \\
+  \implies &22.1431 \pm 1.664978 \nonumber \\
+  \implies &(20.47812, 23.80808) \label{quad_pi}
+\end{align}
+Therefore the the predicition interval (\ref{quad_pi}) will contain the measured viscosity using the settings the chemist provided 95\% of the time.
+
+
+\newpage
+\section{Analyse of data with R}
+For this section I will be using R functions to analyse the data using the same 2 models in the previous section.
+
+
+\subsection{Recreating the linear model, with R anaylsis}
+So for this I will use the regression model in (\ref{lin_model}). The code used for this is given under Listing-(\ref{R_lin_code}). The result from R is then given in Listing-(\ref{R_lin_analysis}). From the summary, under the \enquote{Estimate} column, we can conclude that the estimate of $\vect{\beta}$ is:
+\begin{equation} \label{R_lin_beta}
+  \est{\vect{\beta}} =
+  \begin{pmatrix}
+       2.799544 \\
+      -0.095824 \\
+       0.524821 \\
+      -0.010152
+  \end{pmatrix}
+\end{equation}
+This would result in the estimated linear model now looking like:
+\begin{equation*}
+\est{\vect{y}} = \begin{pmatrix}
+                    \vect{1} & \vect{X_1} & \vect{X_2} & \vect{X_1}\vect{X_2}
+                 \end{pmatrix}
+                 \begin{pmatrix}
+                     2.799544 \\
+                    -0.095824 \\
+                     0.524821 \\
+                    -0.010152
+                 \end{pmatrix}
+\end{equation*}
+
+
+\subsubsection{Find the estimate of the variance of response}
+The various estimates of variance for the different explanatory/response variables can be shown in the anova table under the Listing-(\ref{R_lin_analysis}). As we want to find the estimate of the variance of response, we look at the value of the \enquote{Residuals} row, under the \enquote{Mean Sq} column. This gives us that $\est{\sigma}^2 = 7.12$. Below the anov table we can find a more precise value of $\est{\sigma}^2 = 7.116698$.
+
+
+\subsubsection{Finding the coefficient of determination}
+The coefficient of determination $R^2$ can be found in the summary table under Listing-(\ref{R_lin_analysis}). The value can be given in the line \enquote{Multiple R-squared:  0.9317}, i.e giving $R^2=0.9317$. As $R^2$ is very close to 1, then we can say that the model in R is very succesful in predicting the observed values of the response.
+
+
+\subsubsection{Testing for if the true values of the model parameters equal to zero}
+Test for significance for each model parameters, i.e: $H_0: \beta_i = \vect{0}, H_1: \beta_i \neq \vect{0}$. I choose $\alpha = 1-\gamma = 2.5\%$ significance test. The critical value $t_{n-p, \gamma}=t_{19, 0.975} = 2.093$. The t values for each input variable is given in the \enquote{t value} column of the summary table in Listing-(\ref{R_lin_analysis}). While the critical value $t_{19, 0.975} = 2.093 > |1.693|, |-0.947|$, so the (Intercept) and \enquote{tab\$Oil} pass, \enquote{tab\$Filler} and \enquote{I(tab\$Oil * tab\$Filler)} do not pass as $t_{19, 0.975} = 2.093 < |11.618|, |-3.815|$. Therefore we reject $H_0$ and conclude that the model parameters are significant.
+
+
+\subsection{Recreating the quadratic model, with R anaylsis}
+So for this I will use the regression model in (\ref{quad_model}). The code used for this is given under Listing-(\ref{R_quad_code}). The result from R is then given in Listing-(\ref{R_quad_analysis}). From the summary, under the \enquote{Estimate} column, we can conclude that the estimate of $\vect{\beta}$ is:
+\begin{equation} \label{R_quad_beta}
+  \est{\vect{\beta}} =
+  \begin{pmatrix}
+     6.0166447  \\
+    -0.2065711  \\
+     0.1434677  \\
+    -0.0123254  \\
+     0.0068797  \\
+     0.0065974  \\
+  \end{pmatrix}
+\end{equation}
+This would result in the estimated quadratic model now looking like:
+\begin{equation*}
+\vect{y} = \begin{pmatrix}
+              \vect{1} & \vect{X_1} & \vect{X_2} & \vect{X_1}\vect{X_2} & \vect{X_1}^2 & \vect{X_2}^2
+           \end{pmatrix}
+           \begin{pmatrix}
+             6.0166447  \\
+            -0.2065711  \\
+             0.1434677  \\
+            -0.0123254  \\
+             0.0068797  \\
+             0.0065974  \\
+           \end{pmatrix}
+\end{equation*}
+
+
+\subsubsection{Find the estimate of the variance of response}
+The various estimates of variance for the different explanatory/response can be shown in the anova table under the Listing-(\ref{R_quad_analysis}). As we want to find the estimate of the variance of response, we look at the value of the \enquote{Residuals} row, under the \enquote{Mean Sq} column. This gives us that $\est{\sigma}^2 = 0.74$. Below the anov table we can find a more precise value of $\est{\sigma}^2 = 0.7375553$. The variance estimate of response for the quadratic model is smaller than the linear model, because the quadratic model has a much closer fit to the data points given in the sample than the linear model.
+
+
+\subsubsection{Finding the coefficient of determination}
+The coefficient of determination $R^2$ can be found in the summary table under Listing-(\ref{R_quad_analysis}). The value can be given in the line \enquote{Multiple R-squared:  0.9937}, i.e giving $R^2=0.9937$. As $R^2$ is very close to 1, then we can say that the model in R is very succesful in predicting the observed values of the response.
+
+
+\subsubsection{Testing for if the true values of the model parameters equal to zero}
+Test for significance for each model parameters, i.e: $H_0: \beta_i = \vect{0}, H_1: \beta_i \neq \vect{0}$. I choose $\alpha = 1-\gamma = 2.5\%$ significance test. The critical value $t_{n-p, \gamma}=t_{17, 0.975} = 2.110$. The t values for each input variable is given in the \enquote{t value} column of the summary table in Listing-(\ref{R_quad_analysis}). None of the input variables / (Intercept) pass as:
+$t_{19, 0.975} = 2.093 < |10.081|, |-3.465|, |4.267|, |-14.071|, |3.775|, |12.640|$. \par
+Therefore we reject $H_0$ and conclude that the model parameters are significant.
+
+
+\subsection{Prediction using confidence intervals}
+I will choose to use the quadratic regression model (\ref{quad_model}) when working out the confidence intervals. \enquote{An elastomer blend with viscosity equal to 21 M is required. A chemist believes that this can be achieved by using 10 phr oil and 50 phr filler.}
+
+\subsubsection{95\% confidence interval for the mean viscosity of elastomer blends manufactured as suggested by the chemist}
+The 95\% confidence interval can be found in the Listing-(\ref{R_quad_analysis}), as the variable \enquote{ci}. This gives us a confidence interval of: $(21.45403, 22.83217)$. As the chemist guess of 21M for the viscosity exists outside of the confidence interval then we reject his proposal that it can be achieved by using 10 phr oil and 50 phr filler.
+
+
+\subsubsection{Calculating an interval that will contain the measured value 95\% of the time}
+The 95\% confidence interval can be found in the Listing-(\ref{R_quad_analysis}), as the variable \enquote{pi}. This gives us a prediction interval of: $(20.20457, 24.08163)$. Therefore the measured viscosity, when using the settings provided by the chemist, will be in the interval $(20.20457, 24.08163)$ 95\% of the time.
+
+
+\newpage
+\section{Conclusion}
+In conclusion, I believe that the chemist is correct in the fact that by adding naphthenic oil (phr) and filler (phr), you can control the viscosity (M) of elastomer blends. My reasoning for this is that I have found that both the linear and quadratic estimated models exist, and succesful can predict the observed values of viscosity, as shown with both coefficient of determination being greater than 0.9, with the quadratic model have a even greater coefficient of determination than the linear models. Futhermore, I am 95\% confident that the true model parameters are not equal to zero for the linear/quadratic models as shown by previous tests, leading to fact that a model does indeed exist for estimating the viscosity by the amount of naphthenic oil and filler added, for the linear and quadratic models. I am confident in saying that quadratic model is a better fit for the given data than the linear model, due to its much smaller estimated response variance and its higher coefficient of determination.
+
+
+\newpage
+\section{Appendix}
+\UseRawInputEncoding
+\begin{lstlisting}[caption={Linear regression equation method},label={lin_code}]
+# Set working directory
+dir<-getwd()
+if(!is.null(dir)) setwd(dir) else stop("Working directory is incorrect")
+
+# Load data as a table
+tab<-read.table("Viscos.txt", header = TRUE)
+
+# Create X matrix
+X<-cbind(
+  rep(1, time = nrow(tab)),
+  tab$Oil,
+  tab$Filler,
+  tab$Oil*tab$Filler
+)
+
+# Get/store transpose of X
+XT<-t(X)
+
+# Get value of n
+n<-nrow(X)
+
+# Times transpose by X
+prod<-XT %*% X
+
+# Find the inverse of prod
+invProd<-solve(prod)
+
+# Create y response vector
+y<-tab$Visc
+
+# Calculate beta vector
+beta<-invProd%*%XT%*%y
+
+# Calculate SSE
+SSE<-t(y)%*%y-t(beta)%*%XT%*%y
+
+# Calculate estimate of variance
+var<-SSE/(nrow(X) - ncol(X))
+
+# Calculate the SST
+SST<-t(y)%*%y
+
+# Calculate mean of y
+my = mean(y)
+
+# Calculate value of SST_C
+SST_C<-SST-n*(my^2)
+
+# Calculate coefficient of regression
+R<-(SST_C-SSE)/SST_C
+
+# Get diagonal of (X^TX)^-1
+dia<-diag(invProd)
+
+# Get values of test statistics
+ts<-beta/(sqrt(var)[1]*sqrt(dia))
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Quadratic regression equation method},label={quad_code}]
+# Set working directory
+dir<-getwd()
+if(!is.null(dir)) setwd(dir) else stop("Working directory is incorrect")
+
+# Load data as a table
+tab<-read.table("Viscos.txt", header = TRUE)
+
+# Create X matrix
+X<-cbind(
+  rep(1, time = nrow(tab)),
+  tab$Oil,
+  tab$Filler,
+  tab$Oil*tab$Filler,
+  tab$Oil^2,
+  tab$Filler^2
+)
+
+# Get/store transpose of X
+XT<-t(X)
+
+# Get value of n
+n<-nrow(X)
+
+# Times transpose by X
+prod<-XT %*% X
+
+# Find the inverse of prod
+invProd<-solve(prod)
+
+# Create y response vector
+y<-tab$Visc
+
+# Get value of X^Ty
+XTy<-XT%*%y
+
+# Calculate beta vector
+beta<-invProd%*%XTy
+
+# Calculate SSE
+SSE<-t(y)%*%y-t(beta)%*%XT%*%y
+
+# Calculate estimate of variance
+var<-SSE/(nrow(X) - ncol(X))
+
+# Calculate the SST
+SST<-t(y)%*%y
+
+# Calculate mean of y
+my = mean(y)
+
+# Calculate value of SST_C
+SST_C<-SST-n*(my^2)
+
+# Calculate coefficient of regression
+R<-(SST_C-SSE)/SST_C
+
+# Get diagonal of (X^TX)^-1
+dia<-diag(invProd)
+
+# Get values of test statistics
+ts<-beta/(sqrt(var)[1]*sqrt(dia))
+
+# Store guessed values from chemist
+f_0=c(1, 10, 50, 500, 100, 2500)
+
+# Calculate f_0%*%beta
+ciMean<-f_0%*%beta
+
+# Calculate f_0(X^TX)^-1f_0
+ciP<-f_0%*%invProd%*%f_0
+
+# 97.5% t distro
+ciT<-2.110
+
+# Calculate CI +-
+ciPM<-ciT*var*sqrt(ciP)
+
+# Calculate confidence interval as 2 vec
+ci<-c(ciMean-ciPM, ciMean+ciPM)
+
+# Calculate PI +-
+piPM<-ciT*var*sqrt(1+ciP)
+
+# Calculate predicition interval as 2 vec
+pi<-c(ciMean-piPM, ciMean+piPM)
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Linear regression summary method},label={R_lin_code}]
+# Set working directory
+dir<-getwd()
+if(!is.null(dir)) setwd(dir) else stop("Working directory is incorrect")
+
+# Load data as a table
+tab<-read.table("Viscos.txt", header = TRUE)
+
+# Fit the model as a linear model
+model.fit<-lm(tab$Visc ~ tab$Oil + tab$Filler + I(tab$Oil*tab$Filler))
+
+# Get summary of model
+summa<-summary(model.fit)
+summa
+
+# Get anova of model
+anov<-anova(model.fit)
+anov
+
+# Find variance of response
+var<-anov[]$`Mean Sq`[4]
+var
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Linear regression summary results},label={R_lin_analysis}]
+Call:
+lm(formula = tab$Visc ~ tab$Oil + tab$Filler + I(tab$Oil * tab$Filler))
+
+Residuals:
+    Min      1Q  Median      3Q     Max
+-3.8302 -1.9674 -0.2477  1.9633  4.9612
+
+Coefficients:
+                         Estimate Std. Error t value Pr(>|t|)
+(Intercept)              2.799544   1.653113   1.693  0.10669
+tab$Oil                 -0.095824   0.101145  -0.947  0.35533
+tab$Filler               0.524821   0.045173  11.618 4.46e-10 ***
+I(tab$Oil * tab$Filler) -0.010152   0.002661  -3.815  0.00117 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.668 on 19 degrees of freedom
+Multiple R-squared:  0.9317,	Adjusted R-squared:  0.9209
+F-statistic: 86.36 on 3 and 19 DF,  p-value: 2.97e-11
+
+>
+> # Get anova of model
+> anov<-anova(model.fit)
+> anov
+Analysis of Variance Table
+
+Response: tab$Visc
+                        Df  Sum Sq Mean Sq F value    Pr(>F)
+tab$Oil                  1  364.31  364.31  51.191 8.442e-07 ***
+tab$Filler               1 1375.85 1375.85 193.327 2.074e-11 ***
+I(tab$Oil * tab$Filler)  1  103.57  103.57  14.553  0.001169 **
+Residuals               19  135.22    7.12
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+>
+> # Find variance of response
+> var<-anov[]$`Mean Sq`[4]
+> var
+[1] 7.116698
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Quadratic regression summary method},label={R_quad_code}]
+# Delete previous variables
+rm(list=ls())
+
+# Set working directory
+dir<-getwd()
+if(!is.null(dir)) setwd(dir) else stop("Working directory is incorrect")
+
+# Load data as a table
+tab<-read.table("Viscos.txt", header = TRUE)
+
+# Store variables from table
+Visc<-tab$Visc
+Oil<-tab$Oil
+Filler<-tab$Filler
+Interaction<-tab$Oil*tab$Filler
+OilSquared<-tab$Oil^2
+FillerSquared<-tab$Filler^2
+
+# Fit the model as a quadratic model
+model.fit<-lm(Visc ~ Oil + Filler + Interaction + OilSquared + FillerSquared)
+
+# Get summary of model
+summa<-summary(model.fit)
+summa
+
+# Get anova of model
+anov<-anova(model.fit)
+anov
+
+# Find variance of response
+var<-anov[]$`Mean Sq`[6]
+var
+
+newdata<-data.frame(
+  Oil=10,
+  Filler=50,
+  Interaction = 500,
+  OilSquared = 100,
+  FillerSquared = 2500
+)
+
+# Find the confidence interval
+ci<-predict(model.fit, newdata, interval="confidence", level=0.95)
+ci
+
+# Find the predicition interval
+pi<-predict(model.fit, newdata, interval="prediction", level=0.95)
+pi
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Quadratic regression summary results},label={R_quad_analysis}]
+Call:
+lm(formula = Visc ~ Oil + Filler + Interaction + OilSquared +
+    FillerSquared)
+
+Residuals:
+     Min       1Q   Median       3Q      Max
+-1.38709 -0.56863 -0.09948  0.65894  1.39761
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)
+(Intercept)    6.0166447  0.5968487  10.081 1.38e-08 ***
+Oil           -0.2065711  0.0596091  -3.465 0.002958 **
+Filler         0.1434677  0.0336246   4.267 0.000521 ***
+Interaction   -0.0123254  0.0008759 -14.071 8.50e-11 ***
+OilSquared     0.0068797  0.0018223   3.775 0.001510 **
+FillerSquared  0.0065974  0.0005220  12.640 4.53e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.8588 on 17 degrees of freedom
+Multiple R-squared:  0.9937,	Adjusted R-squared:  0.9918
+F-statistic: 533.2 on 5 and 17 DF,  p-value: < 2.2e-16
+
+>
+> # Get anova of model
+> anov<-anova(model.fit)
+> anov
+Analysis of Variance Table
+
+Response: Visc
+              Df  Sum Sq Mean Sq   F value    Pr(>F)
+Oil            1  364.31  364.31  493.9469 5.303e-14 ***
+Filler         1 1375.85 1375.85 1865.4200 < 2.2e-16 ***
+Interaction    1  103.57  103.57  140.4239 1.219e-09 ***
+OilSquared     1    4.85    4.85    6.5718   0.02014 *
+FillerSquared  1  117.83  117.83  159.7599 4.528e-10 ***
+Residuals     17   12.54    0.74
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+>
+> # Find variance of response
+> var<-anov[]$`Mean Sq`[6]
+> var
+[1] 0.7375553
+>
+> newdata<-data.frame(
++   Oil=10,
++   Filler=50,
++   Interaction = 500,
++   OilSquared = 100,
++   FillerSquared = 2500
++ )
+>
+> # Find the confidence interval
+> ci<-predict(model.fit, newdata, interval="confidence", level=0.95)
+> ci
+      fit      lwr      upr
+1 22.1431 21.45403 22.83217
+>
+> # Find the predicition interval
+> pi<-predict(model.fit, newdata, interval="prediction", level=0.95)
+> pi
+      fit      lwr      upr
+1 22.1431 20.20457 24.08163
+\end{lstlisting}
+\end{document}
