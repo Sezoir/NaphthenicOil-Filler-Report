@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2019.11.12)  11 MAY 2020 21:40
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2019.11.12)  11 MAY 2020 22:04
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -418,18 +418,18 @@ Package csquotes Info: ... none found.
  (./report.aux)
 \openout1 = `report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 79.
-LaTeX Font Info:    ... okay on input line 79.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 79.
-LaTeX Font Info:    ... okay on input line 79.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 79.
-LaTeX Font Info:    ... okay on input line 79.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 79.
-LaTeX Font Info:    ... okay on input line 79.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 79.
-LaTeX Font Info:    ... okay on input line 79.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 79.
-LaTeX Font Info:    ... okay on input line 79.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 78.
+LaTeX Font Info:    ... okay on input line 78.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -594,7 +594,7 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
  [1
 
 {c:/Compilers/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [1] [2] [3] [4]
-Overfull \hbox (5.56201pt too wide) detected at line 368
+Overfull \hbox (5.56201pt too wide) detected at line 367
 []
  []
 
@@ -725,14 +725,14 @@ Missing character: There is no ™ in font cmtt8!
 Here is how much of TeX's memory you used:
  18882 strings out of 492164
  353051 string characters out of 6124347
- 935130 words of memory out of 5000000
+ 935108 words of memory out of 5000000
  23124 multiletter control sequences out of 15000+600000
  544617 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  52i,26n,67p,1027b,1801s stack positions out of 5000i,500n,10000p,200000b,80000s
 <c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Compilers/texlive/2019
 /texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/Compilers/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb>
-Output written on report.pdf (18 pages, 212091 bytes).
+Output written on report.pdf (18 pages, 211946 bytes).
 PDF statistics:
  118 PDF objects out of 1000 (max. 8388607)
  83 compressed objects within 1 object stream
